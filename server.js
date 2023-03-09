@@ -14,8 +14,9 @@ require('dotenv').config();
 
 let data = require('./data/weather.json');
 
+
 // we must include cors if we want to share resources over the web
-// const cors = require('cors');
+const cors = require('cors');
 
 // USE
 // once we require something, we have to use it
@@ -23,6 +24,7 @@ let data = require('./data/weather.json');
 // react does this in one step with import, it says we must use it and it assigns it to a variable
 // express takes 2 steps: require and use
 const app = express();
+app.use(cors());
 
 // define a PORT & validate env is working
 const PORT = process.env.PORT || 3002;
@@ -36,42 +38,62 @@ const PORT = process.env.PORT || 3002;
 // app.get() correlates to axios.get()
 // the first arugment is a URL in quote
 // the second is the callback that defines what should happen when aa request comes into that url
-app.get('/', (request, response) => {
-  response.send('Hello from our server!');
-});
+// app.get('/', (request, response) => {
+//   response.send('Hello from our server!');
+// });
 
-app.get('/sayHello', (request, response) => {
-  console.log(request.query.firstName);
-  let firstName = request.query.firstName;
-  response.send(`hello ${firstName}`);
-});
+// app.get('/sayHello', (request, response) => {
+//   console.log(request.query.firstName);
+//   let firstName = request.query.firstName;
+//   response.send(`hello ${firstName}`);
+// });
 
 
 // example request: http://localhost:3001/weather?data=lat
-app.get('/city', (request, response) => {
-  response.send('Weather incoming');
-  let cityRequested = request.query.city_name;
-  // find the pet in the pet array (from pets.json) whose species equals what the is requested
-  let dataToSend = data.find(city => city.city_name === cityRequested);
-  response.send(dataToSend);
+app.get('/city', (request, response, next) => {
+  try {
+    // response.send('Weather incoming');
+    let cityRequested = request.query.city_name;
+    console.log(cityRequested);
+    // find the pet in the pet array (from pets.json) whose species equals what the is requested
+    let cityObject = data.find(city => city.city_name.toLowerCase() === cityRequested.toLowerCase());
+    // console.log(cityObject);
+    // let selectedCity = new City(cityObject);
+    let selectedForecast = cityObject.data.map(temp => new Forecast(temp));
+    // console.log(selectedForecast);
+    // response.send(selectedCity);
+    response.send(selectedForecast);
+  } catch (error) {
+    next(error);
+  }
 });
-
-
-
-
-
-
 
 // must be listed last in our route list
 app.get('*', (req, res) => {
   res.send('The resource does not exist');
 });
 
+// CLASSES
+// class City {
+//   constructor(cityObject) {
+//     this.name = cityObject.city_name;
+//     this.lon = cityObject.lon;
+//     this.lat = cityObject.lat;
+//   }
+// }
 
+class Forecast {
+  constructor(cityObject) {
+    this.date = cityObject.valid_date;
+    this.description = cityObject.weather.description;
+  }
+}
 
-
-
-
+// ERRORS
+// handle all the errors
+// app.use((error, request, response, next) => {
+//   response.status(500).send(error.message);
+// });
 
 
 // LISTEN
