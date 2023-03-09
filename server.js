@@ -124,11 +124,11 @@ class Movies {
   constructor(movie) {
     this.title = movie.original_title;
     this.overview = movie.overview;
-    this.average_votes = movie.average_votes;
-    this.total_votes = movie.total_votes;
-    this.image_url = movie.image_url;
+    this.votes = movie.vote_average;
+    this.totalvotes = movie.vote_count;
+    this.imageurl = movie.poster_path;
     this.popularity = movie.popularity;
-    this.released_on = movie.released_on;
+    this.release = movie.release_date;
   }
 }
 
