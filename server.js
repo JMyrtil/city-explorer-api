@@ -7,13 +7,13 @@ console.log('Yuh');
 
 // to creatte a server we are bringing in Express
 const express = require('express');
+const axios = require('axios');
 
 
 // we need to bring in our .env file, so we'll use this after we have run 'npm i dotenv'
 require('dotenv').config();
 
-let data = require('./data/weather.json');
-
+// let data = require('./data/weather.json');
 
 // we must include cors if we want to share resources over the web
 const cors = require('cors');
@@ -49,24 +49,55 @@ const PORT = process.env.PORT || 3002;
 // });
 
 
-// example request: http://localhost:3001/weather?data=lat
-app.get('/city', (request, response, next) => {
+// example request: http://localhost:3001/weather?lat=xxxxx&lon=xxxx&key=xxx
+app.get('/city', async (request, response, next) => {
   try {
     // response.send('Weather incoming');
-    let cityRequested = request.query.city_name;
-    console.log(cityRequested);
+    let lat = request.query.lat;
+    let lon = request.query.lon;
+    let url = `https://api.weatherbit.io/v2.0/forecast/daily?key=${process.env.WEATHERBIT_API_KEY}&lat=${lat}&lon=${lon}&units=I&days=3`;
+    // console.log(url);
+
+
+    let reqForcast = await axios(url);
+    // let cityRequested = request.query.city_name;
+
+    // console.log(cityRequested);
     // find the pet in the pet array (from pets.json) whose species equals what the is requested
-    let cityObject = data.find(city => city.city_name.toLowerCase() === cityRequested.toLowerCase());
+
+    // let cityObject = data.find(city => city.city_name.toLowerCase() === cityRequested.toLowerCase());
+
     // console.log(cityObject);
     // let selectedCity = new City(cityObject);
-    let selectedForecast = cityObject.data.map(temp => new Forecast(temp));
+
+    let reqWeather = reqForcast.data.data.map(temp => new Forecast(temp));
+    // let selectedForecast = cityObject.data.map(temp => new Forecast(temp));
+
     // console.log(selectedForecast);
     // response.send(selectedCity);
-    response.send(selectedForecast);
+    // response.send(selectedForecast);
+    response.send(reqWeather);
   } catch (error) {
     next(error);
   }
 });
+
+
+app.get('/movies', async (request, response, next) => {
+  try {
+    let city = request.query.search;
+
+    let url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&language=en-US&query=${city}&page=1&include_adult=false`;
+    console.log(url.data);
+
+    let movie = await axios(url);
+    let movieData = movie.data.results.map(temp => new Movies(temp));
+    response.send(movieData);
+  } catch (error) {
+    next(error);
+  }
+});
+
 
 // must be listed last in our route list
 app.get('*', (req, res) => {
@@ -77,15 +108,27 @@ app.get('*', (req, res) => {
 // class City {
 //   constructor(cityObject) {
 //     this.name = cityObject.city_name;
-//     this.lon = cityObject.lon;
+// this.lon = cityObject.lon;
 //     this.lat = cityObject.lat;
 //   }
 // }
 
 class Forecast {
-  constructor(cityObject) {
-    this.date = cityObject.valid_date;
-    this.description = cityObject.weather.description;
+  constructor(reqForcast) {
+    this.date = reqForcast.valid_date;
+    this.description = reqForcast.weather.description;
+  }
+}
+
+class Movies {
+  constructor(movie) {
+    this.title = movie.original_title;
+    this.overview = movie.overview;
+    this.average_votes = movie.average_votes;
+    this.total_votes = movie.total_votes;
+    this.image_url = movie.image_url;
+    this.popularity = movie.popularity;
+    this.released_on = movie.released_on;
   }
 }
 
