@@ -18,6 +18,9 @@ const PORT = process.env.PORT || 3002;
 
 app.get('/city', weatherHandler);
 app.get('/movies', getMovie);
+app.get('/', (req, res) => {
+  res.status(200).send('homepagehit');
+});
 
 
 
